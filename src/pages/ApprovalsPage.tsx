@@ -393,6 +393,7 @@ const ApprovalsPage: React.FC = () => {
       <PaymentTable
         payments={filteredPayments}
         detailNav={true}
+        source = {'/approvals'}
         isLoading={isLoading}
         showActions={true}
         onApprove={user?.role === 'admin' ? handleApprove : undefined}

@@ -237,6 +237,7 @@ const PendingProcessingPage: React.FC = () => {
       <PaymentTable
         payments={filteredPayments}
         detailNav={true}
+        source='/dashboard/pending-processing'
         isLoading={isLoading}
         showActions={true}
         onProcess={user?.role === 'accounts' ? handleProcess : undefined}

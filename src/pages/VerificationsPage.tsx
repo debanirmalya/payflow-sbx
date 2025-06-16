@@ -21,6 +21,7 @@ const VerificationPage: React.FC = () => {
     setSearchTerm,
     raiseQuery,
     accountsVerifyPayment,
+    bulkAccountsVerifyPayments,
     resetFilterOptions,
   } = usePaymentStore();
 
@@ -193,6 +194,28 @@ const VerificationPage: React.FC = () => {
     );
   };
 
+  const handleBulkAccountsVerify = async (ids: string[]) => {
+    if (!user) return;
+    const result = await bulkAccountsVerifyPayments(ids);
+
+    if (result.success.length > 0) {
+      console.log(`Successfully processed ${result.success.length} payments`);
+    }
+    if (result.failed.length > 0) {
+      console.error(`Failed to process ${result.failed.length} payments`);
+    }
+
+    // Refresh current page to reflect changes
+    fetchPayments(
+      pagination.page,
+      pagination.pageSize,
+      true,
+      filterOptions,
+      sortOptions,
+      searchTerm
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -274,10 +297,14 @@ const VerificationPage: React.FC = () => {
       <PaymentTable
         payments={filteredPayments}
         detailNav={true}
+        source='/dashboard/verifications'
         isLoading={isLoading}
         showActions={true}
         onVerify={handleVerify}
         onQuery={handleQuery}
+        onBulkAccountsVerify={handleBulkAccountsVerify}
+        enableBulkSelection={user?.role === 'accounts'}
+        maxSelections={10}
         serverPagination={serverPaginationConfig}
       />
     </div>

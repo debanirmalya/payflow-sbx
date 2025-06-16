@@ -271,6 +271,7 @@ const PendingApprovalPage: React.FC = () => {
         payments={filteredPayments}
         isLoading={isLoading}
         detailNav={user?.role !== 'user' ? true : false}
+        source='/dashboard/pending-approval'
         showActions={user?.role !== 'user' ? true : false}
         onApprove={user?.role === 'admin' ? handleApprove : undefined}
         onReject={user?.role === 'admin' ? handleReject : undefined}

@@ -60,6 +60,7 @@ const PaymentDetailPage: React.FC = () => {
 
   // Get navigation state from URL
   const showNavigation = searchParams.get('nav') === 'true';
+  const source = searchParams.get('source');
 
   // Local state for the current payment details
   const [payment, setPayment] = useState<PaymentRequest | null>(null);
@@ -90,14 +91,14 @@ const PaymentDetailPage: React.FC = () => {
   const handlePrevious = () => {
     if (currentPaymentIndex > 0) {
       const prevPayment = payments[currentPaymentIndex - 1];
-      navigate(`/payments/${prevPayment.id}?nav=true`);
+      navigate(`/payments/${prevPayment.id}?nav=true&source=${source}`);
     }
   };
 
   const handleNext = () => {
     if (currentPaymentIndex < payments.length - 1) {
       const nextPayment = payments[currentPaymentIndex + 1];
-      navigate(`/payments/${nextPayment.id}?nav=true`);
+      navigate(`/payments/${nextPayment.id}?nav=true&source=${source}`);
     }
   };
 
@@ -678,7 +679,7 @@ const PaymentDetailPage: React.FC = () => {
       toast.error('Error accessing file. Please try again later.');
     }
   };
-  console.log(payment.attachments,signedUrls)
+
   return (
     <>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -688,7 +689,11 @@ const PaymentDetailPage: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={() => {
-                navigate(-1)
+                if (source) {
+                  navigate(source);
+                } else {
+                  navigate(-1)
+                }
               }}
               icon={<ArrowLeft className="h-5 w-5" />}
               className="mr-2"
@@ -759,12 +764,11 @@ const PaymentDetailPage: React.FC = () => {
                     )}
                   </h2>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-0 space-y-2 sm:space-y-0">
-                    <div className="self-start">
+                    <div className="flex flex-col sm:flex-row items-start gap-2">
                       <PaymentStatusBadge status={payment.status} />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {payment?.accountsVerificationStatus === 'verified' && (
-                        <PaymentStatusBadge status={'accounts_verified'} />
+                      {(payment?.accountsVerificationStatus === 'verified' && 
+                      !['query_raised', 'rejected'].includes(payment.status)) && (
+                        <PaymentStatusBadge status="accounts_approved" />
                       )}
                     </div>
                     <div className="flex items-center space-x-2">

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute.tsx';
 
@@ -12,7 +11,7 @@ import NewPaymentPage from '../pages/NewPaymentPage';
 import PaymentDetailPage from '../pages/PaymentDetailPage';
 import EditPaymentPage from '../pages/EditPaymentPage';
 import FileViewerPage from '../pages/FileViewerPage';
-import VerificationPage from '../pages/VerificationsPage';
+import VerificationPage from '../pages/VerificationsPage.tsx';
 
 // Dashboard Pages
 import TotalRequestsPage from '../pages/dashboard/TotalRequestsPage';

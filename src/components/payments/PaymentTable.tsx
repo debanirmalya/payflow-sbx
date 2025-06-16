@@ -27,6 +27,7 @@ import Tooltip from '../../components/ui/Tooltip';
 interface PaymentTableProps {
   payments: PaymentRequest[];
   detailNav?: boolean;
+  source?: string;
   isLoading?: boolean;
   showActions?: boolean;
   onApprove?: (id: string, paymentAmount: number, reason: string) => void;
@@ -34,6 +35,7 @@ interface PaymentTableProps {
   onBulkApprove?: (ids: string[]) => void;
   onBulkReject?: (ids: string[]) => void;
   onBulkProcess?: (ids: string[]) => void;
+  onBulkAccountsVerify?: (ids: string[]) => void;
   onBulkMarkInvoiceRecieved?: (ids: string[]) => void;
   onProcess?: (id: string, invoiceReceived: 'yes' | 'no', paymentAmount: number, reason: string) => void;
   onQuery?: (id: string, query: string) => void;
@@ -64,6 +66,7 @@ interface PaymentTableProps {
 const PaymentTable: React.FC<PaymentTableProps> = ({
   payments,
   detailNav,
+  source,
   isLoading = false,
   showActions = false,
   onApprove,
@@ -76,6 +79,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
   onAccountsQuery,
   onMarkInvoiceReceived,
   onBulkMarkInvoiceRecieved,
+  onBulkAccountsVerify,
   onVerify,
   enableBulkSelection = false,
   maxSelections = 0,
@@ -327,7 +331,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
 
   const handleRowClick = (payment: PaymentRequest) => {
     if (detailNav) {
-      navigate(`/payments/${payment.id}?nav=true`);
+      navigate(`/payments/${payment.id}?nav=true&source=${source}`);
     } else {
       navigate(`/payments/${payment.id}`);
     }
@@ -446,7 +450,8 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
           (payment) =>
             (user?.role === 'admin' && payment.status === 'pending') ||
             (user?.role === 'accounts' && payment.status === 'approved') ||
-            (user?.role === 'accounts' && payment.status === 'processed')
+            (user?.role === 'accounts' && payment.status === 'processed') ||
+            (user?.role === 'accounts' && payment.status === 'pending')
         )
         .slice(0, maxSelections || 10)
         .map((payment) => payment.id);
@@ -504,6 +509,19 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
       message: `Are you sure you want to process ${selectedPayments.size} payment(s)?`,
       action: () => {
         onBulkProcess?.(Array.from(selectedPayments));
+        setSelectedPayments(new Set());
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
+  const handleBulkAccountsVerify = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Bulk Accounts Verify Payments',
+      message: `Are you sure you want to verify ${selectedPayments.size} payment(s)?`,
+      action: () => {
+        onBulkAccountsVerify?.(Array.from(selectedPayments));
         setSelectedPayments(new Set());
         setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
       },
@@ -746,19 +764,32 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                   ) : user?.role === 'accounts' ? (
                     pageType === 'overdue' ? (
                       <>
-                         <Button
+                        <Button
+                          size="sm"
+                          variant='success'
+                          onClick={handleBulkMarkInvoiceRecieved}
+                          disabled={selectedPayments.size === 0}
+                          className="flex-1 sm:flex-none text-xs sm:text-sm"
+                        >
+                          <span className="hidden sm:inline">Mark Invoice Recieved</span>
+                          <span className="sm:hidden">
+                            Process ({selectedPayments.size})
+                          </span>
+                        </Button>
+                      </>
+                    ) : typeof onBulkAccountsVerify === 'function' ? (
+                      <Button
                         size="sm"
-                        variant='success'
-                        onClick={handleBulkMarkInvoiceRecieved}
+                        variant="success"
+                        onClick={handleBulkAccountsVerify}
                         disabled={selectedPayments.size === 0}
                         className="flex-1 sm:flex-none text-xs sm:text-sm"
                       >
-                        <span className="hidden sm:inline">Mark Invoice Recieved</span>
+                        <span className="hidden sm:inline">Verify Selected</span>
                         <span className="sm:hidden">
                           Process ({selectedPayments.size})
                         </span>
                       </Button>
-                      </>
                     ) : (
                       <Button
                         size="sm"
@@ -836,7 +867,8 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                                   (p) =>
                                     (user?.role === 'admin' && p.status === 'pending') ||
                                     (user?.role === 'accounts' && p.status === 'approved') ||
-                                    (user?.role === 'accounts' && p.status === 'processed')
+                                    (user?.role === 'accounts' && p.status === 'processed') ||
+                                    (user?.role === 'accounts' && p.status === 'pending')
                                 ).length
                               }
                               onChange={(e) =>
@@ -945,7 +977,8 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                                 checked={selectedPayments.has(payment.id)}
                                 disabled={
                                   ((user?.role === 'admin' && payment.status !== 'pending') ||
-                                    (user?.role === 'accounts' && payment.status !== 'approved' && payment.status !== 'processed')) ||
+                                    (user?.role === 'accounts' && payment.status !== 'approved' &&
+                                       payment.status !== 'processed' && payment.status !== 'pending')) ||
                                   (maxSelections > 0 &&
                                     selectedPayments.size >= maxSelections &&
                                     !selectedPayments.has(payment.id))
@@ -982,11 +1015,14 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                               {payment.advanceDetails
                                 .replace(/_/g, ' ')
                                 .replace(/\b\w/g, (l) => l.toUpperCase())}
-                              {payment.accountsVerificationStatus === 'verified' && (
-                                <Tooltip content="Verified by Accounts">
-                                  <CheckCircle2 className="h-5 w-5 text-green-500" aria-label="Verified by Accounts" />
-                                </Tooltip>
-                              )}
+                              {payment.accountsVerificationStatus === 'verified' &&
+                                !['query_raised', 'rejected'].includes(payment.status) && (
+                                  <Tooltip content="Approved by Accounts">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-xl text-xs font-bold bg-cyan-200 text-cyan-800">
+                                      AA
+                                    </span>
+                                  </Tooltip>
+                                )}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
