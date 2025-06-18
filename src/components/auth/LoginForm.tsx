@@ -11,7 +11,7 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
+  
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
@@ -22,21 +22,21 @@ const LoginForm: React.FC = () => {
   const getEmailFromUsername = (input: string) => {
     return isValidEmail(input) ? input : `${input}@atlantatelecables.com`;
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (!username || !password) {
       showErrorToast('Please enter your credentials');
       return;
     }
-
+    
     setIsLoading(true);
-
+    
     try {
       const emailToUse = getEmailFromUsername(username);
       const success = await login(emailToUse, password);
-
+      
       if (success) {
         navigate('/dashboard');
       } else {
@@ -52,7 +52,7 @@ const LoginForm: React.FC = () => {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <div className="min-h-fit bg-gray-50 flex flex-col justify-center py-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">

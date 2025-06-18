@@ -1,5 +1,5 @@
 import  { useState, useEffect } from 'react';
-import { Plus, Search, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Plus, Search, ArrowLeft, CheckCircle2, Pencil } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { supabase } from '../../lib/supabase';
@@ -27,6 +27,7 @@ const SubcategoriesPage = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(null);
 
   const fetchSubcategories = async () => {
     try {
@@ -85,6 +86,36 @@ const SubcategoriesPage = () => {
     }
   };
 
+  const handleEditSubcategory = async (values: SubcategoryFormValues) => {
+    if (!currentUserId || !editingSubcategory) {
+      showErrorToast('User not authenticated or no subcategory selected');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('subcategories')
+        .update({
+          name: values.name,
+          description: values.description,
+        })
+        .eq('id', editingSubcategory.id);
+
+      if (error) throw error;
+
+      setShowAddForm(false);
+      setEditingSubcategory(null);
+      fetchSubcategories();
+      showSuccessToast('Subcategory updated successfully');
+    } catch (err) {
+      console.error('Error updating subcategory:', err);
+      showErrorToast('Failed to update subcategory');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleAddSubcategory = async (values: SubcategoryFormValues) => {
     if (!currentUserId) {
       showErrorToast('User not authenticated');
@@ -117,6 +148,14 @@ const SubcategoriesPage = () => {
     }
   };
 
+  const handleFormSubmit = async (values: SubcategoryFormValues) => {
+    if (editingSubcategory) {
+      await handleEditSubcategory(values);
+    } else {
+      await handleAddSubcategory(values);
+    }
+  };
+
   const filteredSubcategories = subcategories.filter(subcategory =>
     subcategory.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     subcategory.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -134,7 +173,10 @@ const SubcategoriesPage = () => {
             </p>
           </div>
           <Button
-            onClick={() => setShowAddForm(true)}
+            onClick={() => {
+              setEditingSubcategory(null);
+              setShowAddForm(true);
+            }}
             className="inline-flex items-center"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -146,10 +188,15 @@ const SubcategoriesPage = () => {
           <Card className="mb-6">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-gray-900">Add New Subcategory</h2>
+                <h2 className="text-lg font-medium text-gray-900">
+                  {editingSubcategory ? 'Edit Subcategory' : 'Add New Subcategory'}
+                </h2>
                 <Button
                   variant="ghost"
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setEditingSubcategory(null);
+                  }}
                   className="inline-flex items-center text-gray-600 hover:text-gray-900"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
@@ -158,9 +205,17 @@ const SubcategoriesPage = () => {
               </div>
             </div>
             <SubcategoryForm
-              onSubmit={handleAddSubcategory}
-              onCancel={() => setShowAddForm(false)}
+              onSubmit={handleFormSubmit}
+              onCancel={() => {
+                setShowAddForm(false);
+                setEditingSubcategory(null);
+              }}
               isSubmitting={isSubmitting}
+              initialValues={editingSubcategory ? {
+                name: editingSubcategory.name,
+                description: editingSubcategory.description,
+                status: editingSubcategory.status
+              } : undefined}
             />
           </Card>
         )}
@@ -264,16 +319,29 @@ const SubcategoriesPage = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            {subcategory.status === 'pending' && (
+                            <div className="flex justify-end space-x-2">
                               <Button
-                                onClick={() => handleApprove(subcategory.id)}
-                                className="inline-flex items-center text-green-600 hover:text-green-900"
+                                onClick={() => {
+                                  setEditingSubcategory(subcategory);
+                                  setShowAddForm(true);
+                                }}
+                                className="inline-flex items-center text-blue-600 hover:text-blue-900"
                                 variant="ghost"
                               >
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                Approve
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Edit
                               </Button>
-                            )}
+                              {subcategory.status === 'pending' && (
+                                <Button
+                                  onClick={() => handleApprove(subcategory.id)}
+                                  className="inline-flex items-center text-green-600 hover:text-green-900"
+                                  variant="ghost"
+                                >
+                                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                                  Approve
+                                </Button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))

@@ -30,7 +30,11 @@ const calculateDashboardStats = (payments: PaymentRow[]): DashboardStats => {
   const rejected = payments.filter(p => p.status === 'rejected').length;
   const processed = payments.filter(p => p.status === 'processed').length;
   const queryRaised = payments.filter(p => p.status === 'query_raised').length;
-  const accountsQueriesRaised = payments.filter(p => p.accounts_query && p.accounts_query.trim() !== '').length;
+  const accountsQueriesRaised = payments.filter(p => 
+    p.status === 'approved' && 
+    p.accounts_query && 
+    p.accounts_query.trim() !== ''
+  ).length;
   const pendingAccountsVerifications = payments.filter(p =>
     p.status === 'pending' &&
     p.accounts_verification_status === 'pending'
@@ -325,7 +329,8 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
 
               // Apply accounts query filter
               if (currentFilters.hasAccountsQuery) {
-                query = query.not('accounts_query', 'is', null);
+                query = query.not('accounts_query', 'is', null)
+                           .not('accounts_query', 'eq', '');
               }
 
               // Apply accounts verification status filter
@@ -1906,8 +1911,9 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
   },
 
   bulkMarkInvoiceReceived: async (ids: string[]) => {
+    console.log('[bulkMarkInvoiceReceived] Starting with IDs:', ids);
     set({ isLoading: true });
-
+  
     const result = await withNetworkCheck(
       async () => {
         try {
@@ -1919,19 +1925,19 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
             })
             .in('id', ids)
             .select();
-
+  
           if (error) {
             console.error('[bulkMarkInvoiceReceived] Supabase error:', error.message, error.details);
             handleSupabaseError(error);
             return { success: [], failed: ids };
           }
-
+  
           console.log('[bulkMarkInvoiceReceived] Successfully updated payments:', data.length);
-
+  
           const transformedPayments = await Promise.all(
             data.map((payment: any) => transformSinglePayment(payment))
           );
-
+  
           set((state) => ({
             payments: state.payments.map((p) => {
               const updated = transformedPayments.find((tp) => tp.id === p.id);
@@ -1939,10 +1945,10 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
             }),
             isLoading: false,
           }));
-
+  
           console.log('[bulkMarkInvoiceReceived] State updated and filters reapplied');
           get().applyFilters();
-
+  
           return { success: ids, failed: [] };
         } catch (error) {
           console.error('[bulkMarkInvoiceReceived] Unexpected error:', error);
@@ -1952,13 +1958,13 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
       },
       'Failed to mark invoices received. Please check your internet connection.'
     );
-
+  
     if (!result) {
       console.warn('[bulkMarkInvoiceReceived] Network check failed');
       set({ isLoading: false });
       return { success: [], failed: ids };
     }
-
+  
     console.log('[bulkMarkInvoiceReceived] Done:', result);
     return result;
   },
@@ -2020,4 +2026,5 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
     return result;
   }
 
+  
 }));

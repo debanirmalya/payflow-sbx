@@ -978,7 +978,7 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                                 disabled={
                                   ((user?.role === 'admin' && payment.status !== 'pending') ||
                                     (user?.role === 'accounts' && payment.status !== 'approved' &&
-                                       payment.status !== 'processed' && payment.status !== 'pending')) ||
+                                      payment.status !== 'processed' && payment.status !== 'pending')) ||
                                   (maxSelections > 0 &&
                                     selectedPayments.size >= maxSelections &&
                                     !selectedPayments.has(payment.id))

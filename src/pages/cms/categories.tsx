@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Plus, Search, ArrowLeft, CheckCircle2, Pencil } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { supabase } from '../../lib/supabase';
@@ -27,6 +27,7 @@ const CategoriesPage = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const fetchCategories = async () => {
     try {
@@ -84,6 +85,36 @@ const CategoriesPage = () => {
     }
   };
 
+  const handleEditCategory = async (values: CategoryFormValues) => {
+    if (!currentUserId || !editingCategory) {
+      showErrorToast('User not authenticated or no category selected');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update({
+          name: values.name,
+          description: values.description,
+        })
+        .eq('id', editingCategory.id);
+
+      if (error) throw error;
+
+      setShowAddForm(false);
+      setEditingCategory(null);
+      fetchCategories();
+      showSuccessToast('Category updated successfully');
+    } catch (err) {
+      console.error('Error updating category:', err);
+      showErrorToast('Failed to update category');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleAddCategory = async (values: CategoryFormValues) => {
     if (!currentUserId) {
       showErrorToast('User not authenticated');
@@ -116,6 +147,14 @@ const CategoriesPage = () => {
     }
   };
 
+  const handleFormSubmit = async (values: CategoryFormValues) => {
+    if (editingCategory) {
+      await handleEditCategory(values);
+    } else {
+      await handleAddCategory(values);
+    }
+  };
+
   const filteredCategories = categories.filter(category =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     category.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -133,7 +172,10 @@ const CategoriesPage = () => {
             </p>
           </div>
           <Button
-            onClick={() => setShowAddForm(true)}
+            onClick={() => {
+              setEditingCategory(null);
+              setShowAddForm(true);
+            }}
             className="inline-flex items-center"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -145,10 +187,15 @@ const CategoriesPage = () => {
           <Card className="mb-6">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-gray-900">Add New Category</h2>
+                <h2 className="text-lg font-medium text-gray-900">
+                  {editingCategory ? 'Edit Category' : 'Add New Category'}
+                </h2>
                 <Button
                   variant="ghost"
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setEditingCategory(null);
+                  }}
                   className="inline-flex items-center text-gray-600 hover:text-gray-900"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
@@ -157,9 +204,16 @@ const CategoriesPage = () => {
               </div>
             </div>
             <CategoryForm
-              onSubmit={handleAddCategory}
-              onCancel={() => setShowAddForm(false)}
+              onSubmit={handleFormSubmit}
+              onCancel={() => {
+                setShowAddForm(false);
+                setEditingCategory(null);
+              }}
               isSubmitting={isSubmitting}
+              initialValues={editingCategory ? {
+                name: editingCategory.name,
+                description: editingCategory.description || ''
+              } : undefined}
             />
           </Card>
         )}
@@ -263,16 +317,29 @@ const CategoriesPage = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            {category.status === 'pending' && (
+                            <div className="flex justify-end space-x-2">
                               <Button
-                                onClick={() => handleApprove(category.id)}
-                                className="inline-flex items-center text-green-600 hover:text-green-900"
+                                onClick={() => {
+                                  setEditingCategory(category);
+                                  setShowAddForm(true);
+                                }}
+                                className="inline-flex items-center text-blue-600 hover:text-blue-900"
                                 variant="ghost"
                               >
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                Approve
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Edit
                               </Button>
-                            )}
+                              {category.status === 'pending' && (
+                                <Button
+                                  onClick={() => handleApprove(category.id)}
+                                  className="inline-flex items-center text-green-600 hover:text-green-900"
+                                  variant="ghost"
+                                >
+                                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                                  Approve
+                                </Button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))

@@ -4,16 +4,17 @@ import * as Yup from 'yup';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 
-export interface SubcategoryFormValues {
-  name: string;
-  description: string;
-  status: 'approved' | 'pending' | 'rejected';
-}
-
 interface SubcategoryFormProps {
   onSubmit: (values: SubcategoryFormValues) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
+  initialValues?: SubcategoryFormValues;
+}
+
+export interface SubcategoryFormValues {
+  name: string;
+  description: string;
+  status: 'approved' | 'pending' | 'rejected';
 }
 
 const validationSchema = Yup.object().shape({
@@ -28,11 +29,12 @@ const validationSchema = Yup.object().shape({
 const SubcategoryForm: React.FC<SubcategoryFormProps> = ({
   onSubmit,
   onCancel,
-  isSubmitting
+  isSubmitting,
+  initialValues
 }) => {
   return (
     <Formik
-      initialValues={{
+      initialValues={initialValues || {
         name: '',
         description: '',
         status: 'approved' as const
@@ -40,95 +42,77 @@ const SubcategoryForm: React.FC<SubcategoryFormProps> = ({
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ errors, touched, status, setFieldValue, values }) => {
-        // Convert name to uppercase for display and storage
-        const displayName = values.name.toUpperCase();
+      {({ errors, touched, status }) => (
+        <Form className="p-6">
+          {status?.error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 mb-6">
+              <p className="font-medium">Error</p>
+              <p className="text-sm mt-1">{status.error}</p>
+            </div>
+          )}
 
-        return (
-          <Form className="p-6">
-            {status?.error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 mb-6">
-                <p className="font-medium">Error</p>
-                <p className="text-sm mt-1">{status.error}</p>
-              </div>
-            )}
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Subcategory Information</h3>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    Subcategory Name
+                  </label>
+                  <Field
+                    as={Input}
+                    id="name"
+                    name="name"
+                    type="text"
+                    fullWidth
+                    placeholder="Enter subcategory name"
+                  />
+                  {errors.name && touched.name && (
+                    <p className="text-sm text-red-600">{errors.name}</p>
+                  )}
+                </div>
 
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Subcategory Information</h3>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      Subcategory Name
-                    </label>
-                    <Field
-                      as={Input}
-                      id="name"
-                      name="name"
-                      type="text"
-                      fullWidth
-                      placeholder="Enter subcategory name"
-                      value={displayName}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const value = e.target.value;
-                        setFieldValue('name', value.toUpperCase());
-                      }}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Subcategory name will be automatically capitalized
-                    </p>
-                    {errors.name && touched.name && (
-                      <p className="text-sm text-red-600">{errors.name}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                      Description
-                    </label>
-                    <Field
-                      as={Input}
-                      id="description"
-                      name="description"
-                      type="text"
-                      fullWidth
-                      placeholder="Enter subcategory description"
-                      value={values.description}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const value = e.target.value;
-                        setFieldValue('description', value);
-                      }}
-                    />
-                    {errors.description && touched.description && (
-                      <p className="text-sm text-red-600">{errors.description}</p>
-                    )}
-                  </div>
+                <div className="space-y-1">
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <Field
+                    as={Input}
+                    id="description"
+                    name="description"
+                    type="text"
+                    fullWidth
+                    placeholder="Enter subcategory description"
+                  />
+                  {errors.description && touched.description && (
+                    <p className="text-sm text-red-600">{errors.description}</p>
+                  )}
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <div className="flex justify-end space-x-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onCancel}
-                  className="min-w-[100px]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="min-w-[100px]"
-                >
-                  {isSubmitting ? 'Adding...' : 'Add Subcategory'}
-                </Button>
-              </div>
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="flex justify-end space-x-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                className="min-w-[100px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="min-w-[100px]"
+              >
+                {isSubmitting ? 'Saving...' : initialValues ? 'Save Changes' : 'Add Subcategory'}
+              </Button>
             </div>
-          </Form>
-        );
-      }}
+          </div>
+        </Form>
+      )}
     </Formik>
   );
 };

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute.tsx';
 
@@ -11,7 +12,8 @@ import NewPaymentPage from '../pages/NewPaymentPage';
 import PaymentDetailPage from '../pages/PaymentDetailPage';
 import EditPaymentPage from '../pages/EditPaymentPage';
 import FileViewerPage from '../pages/FileViewerPage';
-import VerificationPage from '../pages/VerificationsPage.tsx';
+import VerificationPage from '../pages/VerificationsPage';
+import DownloadAppPage from '../pages/DownloadAppPage';
 
 // Dashboard Pages
 import TotalRequestsPage from '../pages/dashboard/TotalRequestsPage';
@@ -34,6 +36,7 @@ export const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/download-app" element={<DownloadAppPage />} />
 
       <Route
         path="/dashboard"

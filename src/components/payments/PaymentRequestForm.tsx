@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { usePaymentStore } from '../../store/paymentStore';
 import Button from '../ui/Button';
@@ -193,6 +193,7 @@ const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
   const { user } = useAuthStore();
   const { addPayment, updatePayment } = usePaymentStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isUploading, setIsUploading] = useState(false);
   const [isQueryPayment, setIsQueryPayment] = useState(false);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -377,6 +378,7 @@ const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
     categoryName: editingPaymentData ? JSON.parse(editingPaymentData).categoryName : '',
     subcategoryName: editingPaymentData ? JSON.parse(editingPaymentData).subcategoryName : '',
   };
+
 
   const handleSubmit = async (
     values: FormValues,
@@ -1903,7 +1905,13 @@ const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => navigate('/payments')}
+                      onClick={() => {
+                        if (location.pathname.includes('/new')) {
+                          navigate('/dashboard');
+                        } else {
+                          navigate('/dashboard/queries');
+                        }
+                      }}
                       className="w-full sm:w-auto"
                     >
                       Cancel

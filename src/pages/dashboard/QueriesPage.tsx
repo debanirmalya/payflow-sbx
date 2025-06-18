@@ -101,6 +101,10 @@ const QueriesPage: React.FC = () => {
   useEffect(() => {
     if (!user) return;
 
+    // Reset filters first to ensure clean state
+    resetFilterOptions();
+
+    // Set up new filter options based on page type
     const newFilterOptions = {
       status: ['query_raised'],
       dateRange: { start: null, end: null },
@@ -111,15 +115,19 @@ const QueriesPage: React.FC = () => {
       hasAccountsQuery: false,
     };
 
+    // Handle different page types
     if (pageType === 'overdue') {
       newFilterOptions.status = ['approved'];
       newFilterOptions.overdueInvoices = true;
     } else if (pageType === 'accounts') {
-      newFilterOptions.status = ['approved'];
+      newFilterOptions.status = ['approved', 'processed']; // Include both approved and processed payments
       newFilterOptions.hasAccountsQuery = true;
     }
 
+    // Set the filter options
     setFilterOptions(newFilterOptions);
+
+    // Fetch data with the new filter options
     fetchPayments(1, 10, true, newFilterOptions, sortOptions, searchTerm);
 
     return () => {
@@ -128,7 +136,7 @@ const QueriesPage: React.FC = () => {
       setLocalSearchTerm('');
       setShowFilters(false);
     };
-  }, [user, pageType]);
+  }, [user, pageType]); // Keep dependencies minimal to prevent loops
 
 
   const handlePageChange = useCallback((page: number) => {
@@ -312,7 +320,7 @@ const QueriesPage: React.FC = () => {
       <PaymentTable
         payments={filteredPayments}
         isLoading={isLoading}
-        enableBulkSelection={pageType==='overdue'}
+        enableBulkSelection={pageType==='overdue' && user?.role === 'accounts'}
         showActions={true}
         onMarkInvoiceReceived={user?.role === 'accounts' ? handleMarkInvoiceReceived : undefined}
         onBulkMarkInvoiceRecieved={(user?.role === 'accounts'&& pageType==='overdue') ? handleBulkMarkInvoiceRecieved : undefined}

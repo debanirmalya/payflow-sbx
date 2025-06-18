@@ -122,7 +122,6 @@ const PaymentDetailPage: React.FC = () => {
           if (billsError) {
             console.error('Error fetching bills:', billsError);
           } else {
-            console.log('Bills Data:', billsData); // Debug log
             // Transform snake_case to camelCase
             const transformedBills = billsData?.map(bill => ({
               id: bill.id,
@@ -766,10 +765,10 @@ const PaymentDetailPage: React.FC = () => {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-0 space-y-2 sm:space-y-0">
                     <div className="flex flex-col sm:flex-row items-start gap-2">
                       <PaymentStatusBadge status={payment.status} />
-                      {(payment?.accountsVerificationStatus === 'verified' && 
-                      !['query_raised', 'rejected'].includes(payment.status)) && (
-                        <PaymentStatusBadge status="accounts_approved" />
-                      )}
+                      {(payment?.accountsVerificationStatus === 'verified' &&
+                        !['query_raised', 'rejected'].includes(payment.status)) && (
+                          <PaymentStatusBadge status="accounts_approved" />
+                        )}
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-500">

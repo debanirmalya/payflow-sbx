@@ -8,6 +8,7 @@ interface VendorFormProps {
   onSubmit: (values: VendorFormValues) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
+  initialValues?: VendorFormValues;
 }
 
 export interface VendorFormValues {
@@ -31,10 +32,10 @@ const validationSchema = Yup.object().shape({
     .matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC code format')
 });
 
-const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel, isSubmitting }) => {
+const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel, isSubmitting, initialValues }) => {
   return (
     <Formik
-      initialValues={{
+      initialValues={initialValues || {
         name: '',
         account_number: '',
         ifsc_code: '',
@@ -43,7 +44,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel, isSubmittin
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {({ errors, touched, status, setFieldValue, values }) => (
+      {({ errors, touched, values, setFieldValue, status }) => (
         <Form className="p-6">
           {status?.error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 mb-6">
@@ -149,7 +150,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ onSubmit, onCancel, isSubmittin
                 disabled={isSubmitting}
                 className="min-w-[100px]"
               >
-                {isSubmitting ? 'Adding...' : 'Add Vendor'}
+                {isSubmitting ? 'Saving...' : initialValues ? 'Update Vendor' : 'Add Vendor'}
               </Button>
             </div>
           </div>

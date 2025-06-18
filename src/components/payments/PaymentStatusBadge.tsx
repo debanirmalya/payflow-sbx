@@ -2,7 +2,7 @@ import React from 'react';
 import Badge from '../ui/Badge';
 
 interface PaymentStatusBadgeProps {
-  status: 'aa'|'accounts_approved' | 'pending' | 'approved' | 'rejected' | 'processed' | 'query_raised';
+  status: 'accounts_approved' | 'pending' | 'approved' | 'rejected' | 'processed' | 'query_raised';
 }
 
 const PaymentStatusBadge: React.FC<PaymentStatusBadgeProps> = ({ status }) => {

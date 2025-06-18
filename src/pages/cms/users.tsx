@@ -84,6 +84,7 @@ const UsersPage: React.FC = () => {
 
       // Store current session
       const { data: { session } } = await supabase.auth.getSession();
+      const currentSession = session;
 
       // Create the user with auto-confirm enabled
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -95,7 +96,7 @@ const UsersPage: React.FC = () => {
             role: values.role,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+        }
       });
 
       if (authError) throw authError;
@@ -115,18 +116,22 @@ const UsersPage: React.FC = () => {
             role: values.role,
             company: 'abc',
             created_at: new Date().toISOString(),
+            status: 'active'
           },
         ]);
 
       if (profileError) {
         // If profile creation fails, we should clean up the auth user
-        await supabase.auth.admin.deleteUser(authData.user.id);
+        await supabase.auth.signOut();
         throw profileError;
       }
 
       // Restore the original session
-      if (session) {
-        await supabase.auth.setSession(session);
+      if (currentSession) {
+        await supabase.auth.setSession({
+          access_token: currentSession.access_token,
+          refresh_token: currentSession.refresh_token,
+        });
       }
 
       showSuccessToast('User created successfully');
@@ -323,7 +328,7 @@ const UsersPage: React.FC = () => {
       }
 
       // Call the Edge Function to reset password
-      const response = await fetch('https://ubdgzldbydfbsvapzmkn.supabase.co/functions/v1/reset-password', {
+      const response = await fetch('https://wqvwsjqqvqcgbrnbqepu.supabase.co/functions/v1/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
