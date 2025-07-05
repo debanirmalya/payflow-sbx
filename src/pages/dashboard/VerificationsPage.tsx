@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAuthStore } from '../store/authStore';
-import { usePaymentStore } from '../store/paymentStore';
-import PaymentTable from '../components/payments/PaymentTable';
 import { Filter, X } from 'lucide-react';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card'; 
+import { usePaymentStore } from '../../store/paymentStore';
+import { useAuthStore } from '../../store/authStore';
+import PaymentTable from '../../components/payments/PaymentTable';
 
 const VerificationPage: React.FC = () => {
   const { user } = useAuthStore();
